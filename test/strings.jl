@@ -14,7 +14,7 @@ msgs = lintstr(s)
 @test msgs[1].code == :E422
 @test occursin("string uses * to concatenate", msgs[1].message)
 
-@test_broken messageset(lintstr("""
+@test messageset(lintstr("""
 s = String(1)
 """)) == Set([:E539])
 

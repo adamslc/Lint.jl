@@ -10,11 +10,11 @@
     @test_broken occursin("with index types $Int is not supported", msgs[1].message)
 
     # dicts
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     s = keys(Dict(1 => 2))
     println(s["foo"])
     """)) == Set([:E522])
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     s = Dict(1 => 2)
     println(s["foo"])
     """)) == Set([:E522])
@@ -43,19 +43,19 @@
         b[:start]
     end
     """)
-    @test_broken messageset(msgs) == Set([:E522])
-    @test_broken msgs[1].variable == "b[:start]"
-    @test_broken occursin("indexing String", msgs[1].message)
-    @test_broken occursin("with index types Symbol is not supported", msgs[1].message)
+    @test messageset(msgs) == Set([:E522])
+    @test msgs[1].variable == "b[:start]"
+    @test occursin("indexing String", msgs[1].message)
+    @test occursin("with index types Symbol is not supported", msgs[1].message)
 
     # zero-dimensional indexing
     msgs = lintstr("""
     d = Dict()
     x = d[]
     """)
-    @test_broken messageset(msgs) == Set([:E522, :E539])
-    @test_broken occursin("indexing Dict", msgs[1].message)
-    @test_broken occursin("with no indices is not supported", msgs[1].message)
+    @test messageset(msgs) == Set([:E522, :E539])
+    @test occursin("indexing Dict", msgs[1].message)
+    @test occursin("with no indices is not supported", msgs[1].message)
 
     msgs = lintstr("""
     a = ""
@@ -65,7 +65,7 @@
     @test occursin("indexing String with no indices", msgs[1].message)
 
     # issue 196
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     s = Dict(:b => 2)
     println(keys(s)[1])
     """)) == Set([:E522])

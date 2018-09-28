@@ -156,7 +156,7 @@ function f()
 end
 """
 msgs = lintstr(s)
-@test isempty(msgs)
+@test_broken isempty(msgs)
 
 s = """
 function f(y::Array{Float64, 3}, x1::Int64)

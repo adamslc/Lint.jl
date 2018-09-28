@@ -6,7 +6,7 @@ function registersymboluse(sym::Symbol, ctx::LintContext)
 
     info = lookup(ctx, sym)
     lookupresult = info == nothing ? nothing : registeruse!(info)
-
+    @info "registeruse" sym info lookupresult
     if lookupresult == nothing
         if !pragmaexists("Ignore use of undeclared variable $sym", ctx.current) &&
            ctx.quoteLvl == 0
@@ -50,6 +50,7 @@ function lintlocal(ex::Expr, ctx::LintContext)
 end
 
 function resolveLHSsymbol(ex, syms::Array{Any,1}, ctx::LintContext, assertions::Dict{Symbol,Any})
+    @info "resolveLHSsymbol" ex syms
     if isa(ex, Symbol)
         push!(syms, ex)
     elseif isa(ex, Expr)
@@ -78,6 +79,8 @@ end
 
 function lintassignment(ex::Expr, ctx::LintContext; islocal = false, isConst=false, isGlobal=false, isForLoop=false) # is it a local decl & assignment?
     lhs = ex.args[1]
+
+    @info "lintassignment" ex lhs
 
     # lower curly
     rhstype = Any

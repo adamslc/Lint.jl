@@ -1,5 +1,5 @@
 function lintpkg(pkg::AbstractString)
-    p = joinpath(Pkg.dir(pkg), "src", basename(pkg) * ".jl")
+    p = pkg
     if !ispath(p)
         throw("cannot find path: " * p)
     end

@@ -27,7 +27,7 @@
     end
     """)))
 
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     function f(x)
         d = [(1,2,3), (4,5,6)]
         for (i, j) in d

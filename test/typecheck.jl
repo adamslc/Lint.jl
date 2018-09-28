@@ -110,9 +110,9 @@ function f()
 end
 """
 msgs = lintstr(s)
-@test_broken msgs[1].code == :E525
-@test_broken msgs[1].variable == "z"
-@test_broken occursin("is of an immutable type Complex", msgs[1].message)
+@test msgs[1].code == :E525
+@test msgs[1].variable == "z"
+@test occursin("is of an immutable type Complex", msgs[1].message)
 
 #= TODO: the warning here should be on a = Array{Int32, n}, not the E521
 s = """
@@ -202,8 +202,8 @@ s = """
     Complex(1.0,0.0) > 0
 """
 msgs = lintstr(s)
-@test_broken msgs[1].code == :W542
-@test_broken occursin("comparing apparently incompatible type", msgs[1].message)
+@test msgs[1].code == :W542
+@test occursin("comparing apparently incompatible type", msgs[1].message)
 
 s = """
 s = Union(Int,Double)
@@ -240,7 +240,7 @@ msgs = lintstr(s)
     x = throw(ArgumentError("error!"))
     """)) == Set([:E539])
 
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     x = 1 + "x"
     """)) == Set([:E422, :E539])
 
@@ -248,11 +248,11 @@ msgs = lintstr(s)
     x = 1 + 1 == 2 ? "OK" : error("problem")
     """))
 
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     x, y = error()
     """)) == Set([:E539])
 
-    @test_broken messageset(lintstr("""
+    @test messageset(lintstr("""
     κ = sqrt("x")
     """)) == Set([:E539])
 end
