@@ -127,7 +127,10 @@ type is defined as
 That is, the maximal amount of information detectable from the lexical context
 alone.
 """
-lexicaltypeof(x) = get(broadcast(typeof, lexicalvalue(x)), Any)
+function lexicaltypeof(x)
+    lexicalvalue(x) == nothing && return Any
+    return typeof(lexicalvalue(x))
+end
 
 """
     expand_trivial_calls(x)
@@ -217,20 +220,24 @@ Return an `Import` from extracting the important semantics from the given
 expression `ex`, or `nothing` otherwise.
 """
 function understand_import(ex)::Union{Import, Nothing}
-    if !isexpr(ex, [:using, :import, :importall])
+    if !isexpr(ex, [:using, :import])
         return nothing
     end
 
     kind = ex.head
     dots = 0
-    for x in ex.args
+    module_list = ex.args[1].head == :. ?
+        ex.args[1].args : ex.args[1].args[1].args
+
+    for x in module_list
         if x === :.
             dots += 1
         else
             break
         end
     end
-    path = ex.args[dots+1:end]
+    path = module_list[dots+1:end]
+    # append!(path, ex.args[1].args[2].args)
 
     Import(dots, path, kind)
 end

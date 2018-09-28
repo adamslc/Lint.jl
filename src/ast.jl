@@ -43,8 +43,8 @@ function lintexpr(ex::Expr, ctx::LintContext)
         lintifexpr(ex, ctx)
     elseif ex.head == :(=) && typeof(ex.args[1])==Expr && ex.args[1].head == :call
         lintfunction(ex, ctx)
-    elseif !isnull(expand_assignment(ex))
-        ea = get(expand_assignment(ex))
+    elseif expand_assignment(ex) != nothing
+        ea = expand_assignment(ex)
         lintassignment(Expr(:(=), ea[1], ea[2]), ctx)
     elseif ex.head == :local
         lintlocal(ex, ctx)
@@ -92,7 +92,7 @@ function lintexpr(ex::Expr, ctx::LintContext)
     elseif ex.head == :stagedfunction
         lintfunction(ex, ctx, isstaged=true)
     elseif ex.head == :macrocall && ex.args[1] == Symbol("@generated")
-        lintfunction(ex.args[2], ctx, isstaged=true)
+        lintfunction(ex.args[3], ctx, isstaged=true)
     elseif ex.head == :macro
         lintmacro(ex, ctx)
     elseif ex.head == :macrocall

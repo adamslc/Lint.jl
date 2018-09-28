@@ -23,7 +23,7 @@ false
 function canequal(S::Type, T::Type)
     if S == Union{} || T == Union{}
         false
-    elseif typeintersect(S, T) ≠ Union{}
+    elseif typeintersect(S, T) != Union{}
         # TODO: this is not fully correct; some types are not Union{} but still
         # not instantiated
         true
@@ -54,8 +54,8 @@ isknownerror(_f, _argtypes) = false
 function isknownerror(::typeof(Base.getindex), argtypes)
     if isempty(argtypes)
         true
-    elseif argtypes[1] <: Associative
-        if Base.length(argtypes) ≠ 2
+    elseif argtypes[1] <: AbstractDict
+        if Base.length(argtypes) != 2
             true
         else
             try

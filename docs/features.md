@@ -199,7 +199,7 @@ julia> using Lint
 
 julia> using JSON
 
-julia> if is_windows()
+julia> if Sys.iswindows()
            pipe_lm = "\\\\.\\pipe\\testsocket"
        else # linux, osx
            pipe_lm = tempname()

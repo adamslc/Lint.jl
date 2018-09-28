@@ -1,5 +1,5 @@
 @testset "using" begin
-    @test_broken isempty(lintstr("""
+    @test isempty(lintstr("""
     module TmpTestBase
         export foobar
         foobar(x) = x

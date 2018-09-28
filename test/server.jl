@@ -78,7 +78,7 @@ end
 end
 
 @testset "Testing lintserver() with named pipe and JSON format" begin
-    if is_windows()
+    if Sys.iswindows()
         pipe_lm = "\\\\.\\pipe\\testsocket"
         pipe_slv1 = "\\\\.\\pipe\\testsocket2"
         pipe_vscode = "\\\\.\\pipe\\testsocket3"

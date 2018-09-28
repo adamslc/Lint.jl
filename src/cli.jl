@@ -15,7 +15,7 @@ If file is in base lint all files in base dir.
 function lintpkgforfile(path::AbstractString, ctx::LintContext=LintContext())
     path = abspath(path)
     if ispath(ctx.path)
-        if is_windows()
+        if Sys.iswindows()
             len = count(x -> x == '\\', path)
         else
             len = count(x -> x == '/', path) - 1
@@ -48,7 +48,7 @@ function lintfile(f::AbstractString)
     if !ispath(f)
         throw("no such file exists")
     end
-    str = open(readstring, f)
+    str = open(io -> read(io, String), f)
     lintfile(f, str)
 end
 
@@ -75,26 +75,29 @@ function lintfile(f::AbstractString, code::AbstractString)
 end
 
 function _lintstr(str::AbstractString, ctx::LintContext, lineoffset = 0)
-    linecharc = cumsum(map(x->length(x)+1, split(str, "\n", keepempty=true)))
+    linecharc = [0; cumsum(map(x->length(x)+1, split(str, "\n", keepempty=true)))]
     numlines = length(linecharc)
-    itr = iterate(str)
-    while itr !== nothing
-        (_, i) = itr
+
+    i = 1
+    while i <= length(str)
         problem = false
         ex = nothing
         linerange = searchsorted(linecharc, i)
-        if first(linerange) > numlines # why is it not donw?
+
+        # Check for end of file
+        if first(linerange) > numlines
             break
-        else
-            linebreakloc = linecharc[first(linerange)]
         end
+
+        linebreakloc = linecharc[first(linerange)]
+
         if linebreakloc == i || isempty(strip(str[i:(linebreakloc-1)]))# empty line
             i = linebreakloc + 1
             continue
         end
         ctx.line = ctx.lineabs = first(linerange) + lineoffset
         try
-            itr = Meta.parse(str,i)
+            (ex, i) = Meta.parse(str,i)
         catch y
             if typeof(y) != Meta.ParseError || y.msg != "end of input"
                 msg(ctx, :E111, string(y))

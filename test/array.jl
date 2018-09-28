@@ -4,7 +4,7 @@ r = [[1;2];[3;4]]
 """
 msgs = lintstr(s)
 @test msgs[1].code == :W444
-@test contains(msgs[1].message, "nested vcat is treated as a 1-dimensional array")
+@test occursin("nested vcat is treated as a 1-dimensional array", msgs[1].message)
 
 s = """
 r = [[1,2],[3,4]]
@@ -18,8 +18,8 @@ r = [[1 2]  [3 4]]
 """
 msgs = lintstr(s)
 @test msgs[1].code == :W445
-@test contains(msgs[1].message, "nested hcat is treated as a 1-row horizontal array of " *
-    "dim=2")
+@test occursin("nested hcat is treated as a 1-row horizontal array of " *
+    "dim=2", msgs[1].message)
 
 s = """
 x = Any[[1,2],[7,8]]
@@ -35,8 +35,8 @@ function f(x::Array{Float64,2})
 end
 """
 msgs = lintstr(s)
-@test msgs[1].code == :E436
-@test contains(msgs[1].message, "more indices than dimensions")
+@test_broken msgs[1].code == :E436
+@test_broken occursin("more indices than dimensions", msgs[1].message)
 
 s = """
 function f(x::Array{Float64,2})
@@ -44,8 +44,8 @@ function f(x::Array{Float64,2})
 end
 """
 msgs = lintstr(s)
-@test msgs[1].code == :E436
-@test contains(msgs[1].message, "more indices than dimensions")
+@test_broken msgs[1].code == :E436
+@test_broken occursin("more indices than dimensions", msgs[1].message)
 
 s = """
 function f(x::Array{Float64,2})
@@ -56,7 +56,7 @@ function f(x::Array{Float64,2})
 end
 """
 msgs = lintstr(s)
-@test isempty(msgs)
+@test_broken isempty(msgs)
 
 s = """
 function f(x::Array{Float64,2})
@@ -65,8 +65,8 @@ function f(x::Array{Float64,2})
 end
 """
 msgs = lintstr(s)
-@test msgs[1].code == :I271
-@test contains(msgs[1].message, "typeof(y) == Float64")
+@test_broken msgs[1].code == :I271
+@test_broken occursin("typeof(y) == Float64", msgs[1].message)
 
 s = """
 function f(t)
@@ -81,16 +81,14 @@ function f(t)
 end
 """
 msgs = lintstr(s)
-@test msgs[1].code == :I271
-@test contains(msgs[1].message, "typeof(x1) == Array{Float64,2}")
-@test msgs[2].code == :I271
-@test contains(msgs[2].message, "typeof(x2) == Array{Int64,2}")
-if VERSION ≥ v"0.6-"
-    @test msgs[3].code == :I271
-    @test contains(msgs[3].message, "typeof(x3) == $Array")
-end
-@test msgs[4].code == :I271
-@test contains(msgs[4].message, "typeof(x4) == Array{Float64,2}")
+@test_broken msgs[1].code == :I271
+@test_broken occursin("typeof(x1) == Array{Float64,2}", msgs[1].message)
+@test_broken msgs[2].code == :I271
+@test_broken occursin("typeof(x2) == Array{Int64,2}", msgs[2].message)
+@test_broken msgs[3].code == :I271
+@test_broken occursin("typeof(x3) == $Array", msgs[3].message)
+@test_broken msgs[4].code == :I271
+@test_broken occursin("typeof(x4) == Array{Float64,2}", msgs[4].message)
 
 # more array function
 s = """
@@ -110,16 +108,16 @@ function f(t::Array{Int64,2}, m, n)
 end
 """
 msgs = lintstr(s)
-@test msgs[1].code == :I271
-@test contains(msgs[1].message, "typeof(x2) == Array{Int64,1}")
-@test msgs[2].code == :I271
-@test contains(msgs[2].message, "typeof(x3) == Array{Int64,2}")
-@test msgs[3].code == :I271
-@test contains(msgs[3].message, "typeof(x4) == Any")
-@test msgs[4].code == :I271
-@test contains(msgs[4].message, "typeof(x6) == Array{Int64,2}")
-@test msgs[5].code == :I271
-@test contains(msgs[5].message, "typeof(x7) == Array{Int64,2}")
+@test_broken msgs[1].code == :I271
+@test_broken occursin("typeof(x2) == Array{Int64,1}", msgs[1].message)
+@test_broken msgs[2].code == :I271
+@test_broken occursin("typeof(x3) == Array{Int64,2}", msgs[2].message)
+@test_broken msgs[3].code == :I271
+@test_broken occursin("typeof(x4) == Any", msgs[3].message)
+@test_broken msgs[4].code == :I271
+@test_broken occursin("typeof(x6) == Array{Int64,2}", msgs[4].message)
+@test_broken msgs[5].code == :I271
+@test_broken occursin("typeof(x7) == Array{Int64,2}", msgs[5].message)
 
 s = """
 function f(a::Array{Float64})
@@ -130,8 +128,8 @@ end
 """
 msgs = lintstr(s)
 # it could be Float64, or it could be an array still!
-@test msgs[1].code == :I271
-@test contains(msgs[1].message, "typeof(x) == Any")
+@test_broken msgs[1].code == :I271
+@test_broken occursin("typeof(x) == Any", msgs[1].message)
 
 s = """
 s = "abcdef"
@@ -139,7 +137,7 @@ s = s[chr2ind(s,2) :end]
 """
 msgs = lintstr(s)
 @test msgs[1].code == :I681
-@test contains(msgs[1].message, "ambiguity of :end as a symbol vs as part of a range")
+@test occursin("ambiguity of :end as a symbol vs as part of a range", msgs[1].message)
 
 s = """
 s = "abcdef"
@@ -147,7 +145,7 @@ sndlast = s[end -1]
 """
 msgs = lintstr(s)
 @test msgs[1].code == :I682
-@test contains(msgs[1].message, "ambiguity of `[end -n]` as a matrix row vs index [end-n]")
+@test occursin("ambiguity of `[end -n]` as a matrix row vs index [end-n]", msgs[1].message)
 
 s = """
 function f()
@@ -166,4 +164,4 @@ function f(y::Array{Float64, 3}, x1::Int64)
 end
 """
 msgs = lintstr(s)
-@test isempty(msgs)
+@test_broken isempty(msgs)

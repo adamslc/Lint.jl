@@ -21,7 +21,7 @@ extractobject(_::AdditionalVarInfo) = nothing
 """
 A struct with information about a variable.
 """
-struct VarInfo
+mutable struct VarInfo
     location::Location
     typeactual::Type
 
@@ -53,8 +53,7 @@ function info!(vi::VarInfo, info::AdditionalVarInfo)
     vi.extra = info
 end
 
-extractobject(vi::VarInfo) =
-    flatten(BROADCAST(extractobject, vi.extra))
+extractobject(vi::VarInfo) = vi.extra == nothing ? nothing : extractobject(vi.extra)
 
 struct ModuleInfo <: AdditionalVarInfo
     name          :: Symbol
@@ -75,9 +74,9 @@ function lookup(data::ModuleInfo, sym::Symbol)::Union{VarInfo, Nothing}
 
     # check standard library
     val = stdlibobject(sym)
-    if !isnull(val)
-        vi = VarInfo(UNKNOWN_LOCATION, Typeof(get(val)))
-        info!(vi, StandardLibraryObject(get(val)))
+    if val != nothing
+        vi = VarInfo(UNKNOWN_LOCATION, Typeof(val))
+        info!(vi, StandardLibraryObject(val))
         return vi
     end
 
@@ -144,9 +143,9 @@ struct ModuleContext <: _LintContext
     ModuleContext(parent, data) = new(parent, data, Dict(), [])
 end
 
-isroot(mctx::ModuleContext) = isnull(mctx.parent)
+isroot(mctx::ModuleContext) = mctx.parent == nothing
 pragmas(mctx::ModuleContext) = mctx.pragmas
-parent(mctx::ModuleContext) = get(mctx.parent)
+parent(mctx::ModuleContext) = mctx.parent
 data(mctx::ModuleContext) = mctx.data
 lookup(mctx::ModuleContext, args...; kwargs...) =
     lookup(mctx.data, args...; kwargs...)
@@ -164,7 +163,7 @@ function finish(ctx::ModuleContext, cursor)
         vi = ctx.data.globals[x]
         if source(vi) ∉ [:imported, :used]  # allow imported/used bindings
             loc = location(vi)
-            if !isnull(stdlibobject(x))
+            if stdlibobject(x) != nothing
                 msg(cursor, :I343, x, "global variable defined at $loc with same name as export from Base")
             end
         end
@@ -204,12 +203,12 @@ function finish(ctx::LocalContext, cursor)
         if usages(ctx.localvars[x]) == 0 && !startswith(string(x), "_")
             # TODO: a better line number
             msg(cursor, :I340, x, "unused local variable, defined at $loc")
-        elseif !isnull(stdlibobject(x))
+        elseif stdlibobject(x) != nothing
             msg(cursor, :I342, x, "local variable defined at $loc shadows export from Base")
-        elseif !isnull(lookup(tl, x))
-            msg(cursor, :I341, x, "local variable defined at $loc shadows global variable defined at $(location(get(lookup(tl, x))))")
-        elseif !isnull(lookup(nl, x))
-            msg(cursor, :I344, x, "local variable defined at $loc shadows local variable defined at $(location(get(lookup(nl, x))))")
+        elseif lookup(tl, x) != nothing
+            msg(cursor, :I341, x, "local variable defined at $loc shadows global variable defined at $(location(lookup(tl, x)))")
+        elseif lookup(nl, x) != nothing
+            msg(cursor, :I344, x, "local variable defined at $loc shadows local variable defined at $(location(lookup(nl, x)))")
         end
     end
 end
@@ -217,9 +216,9 @@ end
 function set!(s::LocalContext, name::Symbol, vi::VarInfo)
     # TODO: check if it's soft or hard local scope
     var = locallookup(s, name)
-    if !isnull(var)
+    if var != nothing
         # TODO: warn about type instability?
-        get(var).typeactual = Union{get(var).typeactual, vi.typeactual}
+        var.typeactual = Union{var.typeactual, vi.typeactual}
     else
         localset!(s, name, vi)
     end
@@ -249,7 +248,7 @@ end
 
 function lookup(ctx::LocalContext, name::Symbol)::Union{VarInfo, Nothing}
     var = locallookup(ctx, name)
-    if isnull(var)
+    if var == nothing
         lookup(toplevel(ctx), name)
     else
         var

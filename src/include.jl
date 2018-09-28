@@ -12,7 +12,7 @@ function lintinclude(ctx::LintContext, f::AbstractString)
         end
 
         oldloc = location(ctx)
-        str = open(readstring, f)
+        str = open(io -> read(io, String), f)
         location!(ctx, Location(f, 1))
         
         # TODO: make sure to perform the include at top level

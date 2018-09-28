@@ -4,16 +4,17 @@ function registersymboluse(sym::Symbol, ctx::LintContext)
         return Any
     end
 
-    lookupresult = BROADCAST(registeruse!, lookup(ctx, sym))
+    info = lookup(ctx, sym)
+    lookupresult = info == nothing ? nothing : registeruse!(info)
 
-    if isnull(lookupresult)
+    if lookupresult == nothing
         if !pragmaexists("Ignore use of undeclared variable $sym", ctx.current) &&
            ctx.quoteLvl == 0
             msg(ctx, :E321, sym, "use of undeclared symbol")
         end
         Any
     else
-        return get(lookupresult).typeactual
+        return lookupresult.typeactual
     end
 end
 
@@ -21,8 +22,8 @@ function lintglobal(ex::Expr, ctx::LintContext)
     for sym in ex.args
         if isa(sym, Symbol)
             globalset!(ctx.current, sym, VarInfo(location(ctx), Any))
-        elseif !isnull(expand_assignment(sym))
-            ea = get(expand_assignment(sym))
+        elseif expand_assignment(sym) != nothing
+            ea = expand_assignment(sym)
             lintassignment(Expr(:(=), ea[1], ea[2]), ctx; isGlobal=true)
         else
             msg(ctx, :E134, sym, "unknown global pattern")
@@ -109,21 +110,21 @@ function lintassignment(ex::Expr, ctx::LintContext; islocal = false, isConst=fal
 
         if lhsIsTuple
             computedlength = StaticTypeAnalysis.length(rhstype)
-            if !isnull(computedlength) && get(computedlength) ≠ tuplelen
+            if computedlength != nothing && computedlength != tuplelen
                 msg(ctx, :I474, rhstype, "iteration generates tuples, " *
-                    "$tuplelen of $(get(computedlength)) variables used")
+                    "$tuplelen of $(computedlength) variables used")
             end
         end
     elseif isa(rhstype, Type) && lhsIsTuple
         computedlength = StaticTypeAnalysis.length(rhstype)
-        if !isnull(computedlength)
-            if get(computedlength) < tuplelen
+        if computedlength != nothing
+            if computedlength < tuplelen
                 msg(ctx, :E418, rhstype, "RHS is a tuple, $tuplelen of " *
-                    "$(get(computedlength)) variables used")
-            elseif get(computedlength) > tuplelen
+                    "$(computedlength) variables used")
+            elseif computedlength > tuplelen
                 msg(ctx, :W546, rhstype, string(
                     "implicitly discarding values, $tuplelen of ",
-                    get(computedlength), " used"))
+                    computedlength, " used"))
             end
         end
     end
@@ -133,7 +134,7 @@ function lintassignment(ex::Expr, ctx::LintContext; islocal = false, isConst=fal
             if isexpr(s, [:(.), :ref])
                 containertype = guesstype(s.args[1], ctx)
                 if isa(unwrap_unionall(containertype), DataType) &&
-                   !isabstract(containertype) &&
+                   !isabstracttype(containertype) &&
                    !unwrap_unionall(containertype).mutable
                     msg(ctx, :E525, s.args[1], "is of an immutable type $(containertype)")
                 end

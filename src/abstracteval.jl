@@ -4,8 +4,11 @@
 Like `eval`, but does it in the current context and without any dynamism.
 Returns `nothing` if the result can't be evaluated.
 """
-abstract_eval(ctx::LintContext, ex::Symbol) =
-    flatten(BROADCAST(extractobject, lookup(ctx, ex)))
+function abstract_eval(ctx::LintContext, ex::Symbol)
+    info = lookup(ctx, ex)
+    info == nothing && return nothing
+    extractobject(info)
+end
 
 """
     abstract_eval(ctx::LintContext, ex::Expr) :: Union{Any, Nothing}
@@ -22,8 +25,8 @@ Otherwise, return `nothing`.
 """
 abstract_eval(ctx::LintContext, ex::Expr) = begin
     if isexpr(ex, :curly)
-        objs = abstract_eval.(ctx, ex.args)
-        if all(!isnull, objs)
+        objs = abstract_eval.(Ref(ctx), ex.args)
+        if all(objs .!= nothing)
             try
                 Core.apply_type(get.(objs)...)
             catch
@@ -36,9 +39,9 @@ abstract_eval(ctx::LintContext, ex::Expr) = begin
         head = ex.args[1]
         tail = ex.args[2].value
         obj = abstract_eval(ctx, head)
-        if !isnull(obj)
+        if obj != nothing
             try
-                getfield(get(obj), tail)
+                getfield(obj, tail)
             catch
                 nothing
             end

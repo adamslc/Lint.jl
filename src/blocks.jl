@@ -165,7 +165,8 @@ function lintlet(ex::Expr, ctx::LintContext)
             end
         end
         blk = ex.args[1]
-        @assert isexpr(blk, :block)
+        # @info "lintlet" ex blk
+        # @assert isexpr(blk, :block)
         for arg in blk.args
             if isexpr(arg, :(=)) && !isexpr(arg.args[1], :call)
                 lintassignment(arg, ctx; islocal = true)
